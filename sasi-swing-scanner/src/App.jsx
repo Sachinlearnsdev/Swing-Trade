@@ -1,14 +1,9 @@
-import React from "react";
-import "./App.css";
+import Dashboard from "./pages/Dashboard";
 
-function App() {
-    return (
-        <div>
-            <h1 className="text-3xl font-bold underline text-blue-500">
-                Hello world!
-            </h1>
-        </div>
-    );
+export default function App() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Dashboard />
+    </div>
+  );
 }
-
-export default App;
