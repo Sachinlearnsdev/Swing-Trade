@@ -1,4 +1,3 @@
-// src/routes/stocks.js
 import express from "express";
 import { processStocks, getStockHistory } from "../controllers/stockController.js"; // Import the controller function
 

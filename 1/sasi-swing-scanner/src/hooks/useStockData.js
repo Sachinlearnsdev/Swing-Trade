@@ -1,4 +1,3 @@
-// src/hooks/useStockData.js
 import { useState } from "react";
 import { getStockHistory } from "../api/stockService"; // Assuming your getStockHistory function is here
 

@@ -1,8 +1,7 @@
-// src/components/StockCard.jsx
 export default function StockCard({ trendInfo }) {
   if (!trendInfo) return null;
 
-  const { trend, entry, stopLoss, targetPrice, ma44 } = trendInfo;
+  const { trend, entry, stopLoss, targetPrice, ma44, quantity, amountRequired, difference } = trendInfo;
   const color =
     trend === "UP" ? "text-green-600" : trend === "DOWN" ? "text-red-600" : "text-yellow-600";
 
@@ -13,6 +12,9 @@ export default function StockCard({ trendInfo }) {
       <p>Stop Loss: ₹{stopLoss?.toFixed(2)}</p>
       <p>Target Price: ₹{targetPrice?.toFixed(2)}</p>
       <p>44-Day EMA: ₹{ma44?.toFixed(2)}</p>
+      <p>Quantity: {quantity}</p>
+      <p>Amount Required: ₹{amountRequired?.toFixed(2)}</p>
+      <p>Risk Difference: ₹{difference?.toFixed(2)}</p>
     </div>
   );
 }

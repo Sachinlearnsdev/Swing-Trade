@@ -1,5 +1,4 @@
-// src/pages/Dashboard.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StockCard from "../components/StockCard"; // Display stock details
 import { useStockData } from "../hooks/useStockData"; // Custom hook for managing stock data
 
@@ -15,11 +14,13 @@ export default function Dashboard() {
   // Filter stocks based on the selected trend
   const filteredStocks = data.filter((stock) => stock.trend === trendFilter);
 
+  // Sort stocks by amount required (for ranking)
+  const sortedStocks = filteredStocks.sort((a, b) => a.amountRequired - b.amountRequired);
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">📈 Sasi Swing Scanner</h1>
 
-      {/* Button to fetch all stocks */}
       <button
         onClick={fetchAllStocks}
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4"
@@ -27,7 +28,6 @@ export default function Dashboard() {
         Fetch All Stocks
       </button>
 
-      {/* Trend filter dropdown */}
       <select
         value={trendFilter}
         onChange={(e) => setTrendFilter(e.target.value)}
@@ -38,13 +38,12 @@ export default function Dashboard() {
         <option value="DOWN">Downtrend</option>
       </select>
 
-      {loading && <p>Loading...</p>} {/* Show loading message */}
+      {loading && <p>Loading...</p>}
 
-      {/* Display filtered stock data dynamically */}
-      {filteredStocks.length === 0 ? (
+      {sortedStocks.length === 0 ? (
         <p>No stocks found with {trendFilter} trend.</p>
       ) : (
-        filteredStocks.map((stock) => (
+        sortedStocks.map((stock) => (
           <StockCard key={stock.symbol} trendInfo={stock} />
         ))
       )}

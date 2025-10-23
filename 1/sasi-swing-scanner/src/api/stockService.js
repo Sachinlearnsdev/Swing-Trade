@@ -1,4 +1,3 @@
-// src/api/stockService.js
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL; // Use the backend base URL from .env file
@@ -10,7 +9,7 @@ export const getStockHistory = async (symbol) => {
     const res = await axios.get(`${API_URL}/api/stocks/${symbol}`);
     
     // Log the response to inspect its structure
-    console.log("API Response:", res.data);  // Log the response
+    console.log("API Response:", res.data);
 
     // Ensure the response is in the expected structure before using map
     if (Array.isArray(res.data)) {
@@ -21,6 +20,12 @@ export const getStockHistory = async (symbol) => {
         low: item.low,
         close: item.close,
         ema: item.ema, // EMA value included from the backend
+        entry: item.entry,
+        stopLoss: item.stopLoss,
+        targetPrice: item.targetPrice,
+        quantity: item.quantity,
+        amountRequired: item.amountRequired,
+        difference: item.difference
       }));
       return history;
     } else {

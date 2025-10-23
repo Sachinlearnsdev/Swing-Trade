@@ -1,0 +1,26 @@
+{
+  "name": "stock-trading-backend",
+  "version": "1.0.0",
+  "description": "Backend for Stock Trading App with Finnhub API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "fetch-all": "node scripts/fetchAllStocks.js"
+  },
+  "keywords": ["stocks", "trading", "finnhub"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "axios": "^1.5.1",
+    "node-cron": "^3.0.2",
+    "technicalindicators": "^3.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
