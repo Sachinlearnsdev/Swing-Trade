@@ -1,7 +1,8 @@
 const Watchlist = require('../models/Watchlist');
 const Stock = require('../models/Stock');
-const { fetchStockData } = require('./stockController');
+const yahooFinanceAPI = require('../utils/yahooFinance');
 const RateLimiter = require('../utils/rateLimiter');
+const technicalIndicators = require('../utils/technicalIndicators');
 
 const rateLimiter = new RateLimiter(process.env.API_RATE_LIMIT || 60);
 
@@ -147,6 +148,72 @@ const refetchWatchlist = async (req, res) => {
     const results = {
       success: [],
       failed: [],
+    };
+    
+    // Function to fetch stock data
+    const fetchStockData = async (symbol) => {
+      try {
+        const quote = await yahooFinanceAPI.getQuote(symbol);
+        
+        if (!quote || !quote.c) {
+          throw new Error(`No data available for ${symbol}`);
+        }
+        
+        const profile = await yahooFinanceAPI.getCompanyProfile(symbol);
+        
+        const toTimestamp = Math.floor(Date.now() / 1000);
+        const fromTimestamp = toTimestamp - (60 * 24 * 60 * 60);
+        
+        let candles;
+        try {
+          candles = await yahooFinanceAPI.getCandles(symbol, 'D', fromTimestamp, toTimestamp);
+        } catch (error) {
+          console.log(`Could not fetch candles for ${symbol}, using quote data only`);
+          candles = null;
+        }
+        
+        let ema20 = null, ema50 = null, rsi = null, macd = null;
+        
+        if (candles && candles.c && candles.c.length >= 50) {
+          const closes = candles.c;
+          ema20 = technicalIndicators.calculateEMA(closes, 20);
+          ema50 = technicalIndicators.calculateEMA(closes, 50);
+          rsi = technicalIndicators.calculateRSI(closes, 14);
+          macd = technicalIndicators.calculateMACD(closes);
+        }
+        
+        const currentPrice = quote.c;
+        const entryPrice = currentPrice;
+        const stopLoss = currentPrice * 0.95;
+        const targetPrice = currentPrice * 1.10;
+        
+        const trend = technicalIndicators.determineTrend(ema20, ema50, currentPrice);
+        const riskToReward = technicalIndicators.calculateRiskToReward(entryPrice, stopLoss, targetPrice);
+        const successProbability = technicalIndicators.calculateSuccessProbability(rsi, trend, riskToReward);
+        
+        return {
+          symbol: symbol.toUpperCase(),
+          companyName: profile?.name || '',
+          currentPrice,
+          entryPrice,
+          stopLoss,
+          targetPrice,
+          successProbability,
+          riskToReward: parseFloat(riskToReward),
+          trend,
+          ema20,
+          ema50,
+          rsi,
+          macd,
+          volume: quote.v,
+          marketCapitalization: profile?.marketCapitalization || 0,
+          lastFetched: new Date(),
+          isActive: true,
+        };
+      } catch (error) {
+        console.error(`Error processing ${symbol}:`, error.message);
+        throw error;
+      }
     };
     
     for (let i = 0; i < watchlist.stockSymbols.length; i++) {

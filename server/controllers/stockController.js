@@ -1,5 +1,5 @@
 const Stock = require('../models/Stock');
-const finnhubAPI = require('../utils/finnhub');
+const yahooFinanceAPI = require('../utils/yahooFinance');
 const RateLimiter = require('../utils/rateLimiter');
 const technicalIndicators = require('../utils/technicalIndicators');
 
@@ -45,20 +45,20 @@ const getStocks = async (req, res) => {
 
 const fetchStockData = async (symbol) => {
   try {
-    const quote = await finnhubAPI.getQuote(symbol);
+    const quote = await yahooFinanceAPI.getQuote(symbol);
     
     if (!quote || !quote.c) {
       throw new Error(`No data available for ${symbol}`);
     }
     
-    const profile = await finnhubAPI.getCompanyProfile(symbol);
+    const profile = await yahooFinanceAPI.getCompanyProfile(symbol);
     
     const toTimestamp = Math.floor(Date.now() / 1000);
     const fromTimestamp = toTimestamp - (60 * 24 * 60 * 60);
     
     let candles;
     try {
-      candles = await finnhubAPI.getCandles(symbol, 'D', fromTimestamp, toTimestamp);
+      candles = await yahooFinanceAPI.getCandles(symbol, 'D', fromTimestamp, toTimestamp);
     } catch (error) {
       console.log(`Could not fetch candles for ${symbol}, using quote data only`);
       candles = null;

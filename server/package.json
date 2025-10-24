@@ -8,17 +8,22 @@
     "dev": "nodemon server.js",
     "fetch-all": "node scripts/fetchAllStocks.js"
   },
-  "keywords": ["stocks", "trading", "finnhub"],
+  "keywords": [
+    "stocks",
+    "trading",
+    "finnhub"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "mongoose": "^7.6.3",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "axios": "^1.5.1",
     "node-cron": "^3.0.2",
-    "technicalindicators": "^3.1.0"
+    "technicalindicators": "^3.1.0",
+    "yahoo-finance2": "^3.10.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
