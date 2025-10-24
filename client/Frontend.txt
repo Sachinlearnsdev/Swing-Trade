@@ -1,0 +1,536 @@
+# Reusable AI Prompt Template for Frontend Development
+
+## 🎯 Master Prompt Template
+
+Copy and paste this prompt to any AI assistant. Replace the placeholders with your specific needs.
+
+---
+
+## 📋 BASE PROMPT (Use this first time with any AI)
+
+```
+I'm building a Stock Trading App frontend using React + Vite. This is a swing trading app for personal use with the following architecture:
+
+**Tech Stack:**
+- Frontend: React 18 + Vite
+- Routing: React Router DOM v6
+- HTTP Client: Axios
+- Styling: CSS (plain CSS, no UI library)
+- State Management: Context API + Custom Hooks
+
+**Backend API (already built):**
+Base URL: http://localhost:5000/api
+
+**Endpoints:**
+- GET /stocks - Get all stocks (supports filters: trend, minRiskReward, maxRiskReward, minPrice, maxPrice)
+- GET /stocks/refetch/:symbol - Refetch single stock
+- POST /stocks/fetch-multiple - Fetch multiple stocks (body: { symbols: [] })
+- DELETE /stocks/:symbol - Delete stock
+- GET /watchlists - Get all watchlists
+- POST /watchlists - Create watchlist (body: { name, description, stockSymbols })
+- GET /watchlists/:id - Get single watchlist
+- PUT /watchlists/:id - Update watchlist
+- GET /watchlists/:id/refetch - Refetch all stocks in watchlist
+- DELETE /watchlists/:id - Delete watchlist
+
+**Stock Data Structure:**
+{
+  _id: string,
+  symbol: string,
+  companyName: string,
+  currentPrice: number,
+  entryPrice: number,
+  stopLoss: number,
+  targetPrice: number,
+  successProbability: number (0-100),
+  riskToReward: number,
+  trend: 'Uptrend' | 'Downtrend' | 'Neutral',
+  ema20: number,
+  ema50: number,
+  rsi: number,
+  macd: { macd, signal, histogram },
+  volume: number,
+  marketCap: number,
+  lastFetched: Date,
+  isActive: boolean
+}
+
+**Watchlist Data Structure:**
+{
+  _id: string,
+  name: string,
+  description: string,
+  stocks: [Stock objects],
+  stockSymbols: [string],
+  lastRefetched: Date
+}
+
+**Current Folder Structure:**
+/client/
+├── src/
+│   ├── components/
+│   │   ├── common/ (Button, Loading, ErrorMessage, ConfirmDialog)
+│   │   ├── layout/ (Header, Sidebar, Footer)
+│   │   ├── stocks/ (StockTable, StockRow, StockFilters, StockDetails)
+│   │   └── watchlists/ (WatchlistList, WatchlistCard, CreateWatchlistModal, EditWatchlistModal)
+│   ├── pages/ (Dashboard, StocksPage, WatchlistsPage, NotFound)
+│   ├── services/ (api.js, stockService.js, watchlistService.js)
+│   ├── hooks/ (useStocks.js, useWatchlists.js, useFilters.js)
+│   ├── context/ (StockContext.jsx, ThemeContext.jsx)
+│   ├── utils/ (csvExport.js, formatters.js, validators.js, constants.js)
+│   └── styles/ (globals.css, variables.css, components.css)
+
+**App Features:**
+1. View all stocks in a table with sorting and filtering
+2. Refetch individual stocks or entire watchlists
+3. Create/Edit/Delete watchlists
+4. Export filtered stocks to CSV
+5. Real-time loading states and error handling
+6. Responsive design (mobile-friendly)
+
+**Design Guidelines:**
+- Clean, modern UI with clear typography
+- Color coding: Green (Uptrend), Red (Downtrend), Gray (Neutral)
+- Loading spinners for async operations
+- Toast notifications for success/error messages
+- Confirm dialogs for destructive actions (delete)
+
+---
+
+**CURRENT PROGRESS:**
+[FILL THIS IN - e.g., "I have completed: services layer (api.js, stockService.js, watchlistService.js) and custom hooks (useStocks.js, useWatchlists.js)"]
+
+**WHAT I NEED NOW:**
+[FILL THIS IN - e.g., "Create the StockTable.jsx component with sorting, pagination, and refetch button"]
+
+Please provide complete, production-ready code with:
+- Proper error handling
+- Loading states
+- TypeScript-style JSDoc comments
+- Responsive CSS
+- Best practices
+```
+
+---
+
+## 🔄 CONTINUATION PROMPT (Use when switching AI or continuing)
+
+```
+I'm continuing work on my Stock Trading App frontend (React + Vite).
+
+**Context:**
+This is a swing trading app with stocks data from a Node.js/Express backend. The app displays stocks in tables, allows filtering by trend/price/risk-reward ratio, manages watchlists, and exports data to CSV.
+
+**Architecture Summary:**
+- Frontend: React 18 + Vite + React Router v6
+- API Communication: Axios
+- State: Context API + Custom Hooks
+- Styling: Plain CSS (no UI library)
+
+**Backend API Base URL:** http://localhost:5000/api
+
+**Key Endpoints:**
+- GET /stocks (filters: trend, minRiskReward, maxRiskReward)
+- GET /stocks/refetch/:symbol
+- POST /stocks/fetch-multiple
+- GET /watchlists
+- POST /watchlists
+- GET /watchlists/:id/refetch
+
+**Stock Object Fields:**
+symbol, companyName, currentPrice, trend, riskToReward, successProbability, ema20, ema50, rsi, lastFetched
+
+**Files Already Completed:**
+[LIST WHAT YOU'VE DONE - e.g.,
+- ✅ services/api.js - Axios instance with interceptors
+- ✅ services/stockService.js - All stock API calls
+- ✅ services/watchlistService.js - All watchlist API calls
+- ✅ hooks/useStocks.js - Stock state management
+- ✅ hooks/useWatchlists.js - Watchlist state management
+- ✅ components/common/Loading.jsx - Loading spinner
+- ✅ components/common/ErrorMessage.jsx - Error display
+]
+
+**What I Need Now:**
+[SPECIFIC REQUEST - e.g., "Create StockTable.jsx component that displays stocks in a table with columns: Symbol, Company, Price, Trend, R:R Ratio, Success %, Last Updated, Actions (Refetch button)"]
+
+**Requirements:**
+- Use the existing useStocks hook
+- Include proper error handling
+- Show loading state
+- Make it responsive (mobile table scrolls horizontally)
+- Add JSDoc comments
+- Include CSS in the component file or reference globals.css
+
+Please provide complete code with all imports and styling.
+```
+
+---
+
+## 🎯 SPECIFIC FILE REQUEST PROMPTS
+
+### **For a Single Component:**
+
+```
+Create [COMPONENT_NAME] for my Stock Trading App.
+
+**Context:** React 18 + Vite app that displays stock trading data.
+
+**Component Requirements:**
+[Describe what it should do]
+
+**Props:**
+[List expected props with types]
+
+**State/Hooks to Use:**
+[e.g., useStocks, useState for modal visibility]
+
+**Styling:**
+[Clean, modern CSS. Color: green for uptrend, red for downtrend]
+
+**Example:**
+```
+Create StockRow.jsx component.
+
+**Props:**
+- stock (object): { symbol, companyName, currentPrice, trend, riskToReward, successProbability, lastFetched }
+- onRefetch (function): Called when refetch button clicked, receives symbol
+- onDelete (function): Called when delete button clicked, receives symbol
+
+**Requirements:**
+- Display all stock data in table row (<tr>)
+- Format price as $XX.XX
+- Color-code trend (green/red/gray)
+- Show "Refetch" and "Delete" buttons
+- Format lastFetched as "2 hours ago" style
+
+Provide complete code with imports and inline CSS.
+```
+
+---
+
+### **For API Service:**
+
+```
+Create [SERVICE_NAME] service for my Stock Trading App.
+
+**Base API:** http://localhost:5000/api
+**HTTP Client:** Axios (import from './api.js' which has configured axios instance)
+
+**Endpoints to implement:**
+[List endpoints with method, path, params]
+
+**Example:**
+```
+Create stockService.js
+
+**Endpoints:**
+1. getStocks(filters) - GET /stocks?trend=X&minRiskReward=Y
+2. refetchStock(symbol) - GET /stocks/refetch/:symbol
+3. fetchMultipleStocks(symbols) - POST /stocks/fetch-multiple with body { symbols: [] }
+4. deleteStock(symbol) - DELETE /stocks/:symbol
+
+Return format: Each function should be async and return the response data.
+
+Include error handling and JSDoc comments.
+```
+
+---
+
+### **For Custom Hook:**
+
+```
+Create [HOOK_NAME] custom hook for my Stock Trading App.
+
+**Purpose:** [What state/logic it manages]
+**API Service:** [Which service it uses]
+**Return Values:** [What it exposes]
+
+**Example:**
+```
+Create useStocks.js hook.
+
+**Purpose:** Manage stock data fetching, filtering, and refetching.
+
+**Uses:** stockService (from '../services/stockService')
+
+**State:**
+- stocks (array)
+- loading (boolean)
+- error (string|null)
+- filters (object)
+
+**Functions:**
+- fetchStocks() - Fetch with current filters
+- refetchStock(symbol) - Refetch single stock and update in array
+- applyFilters(newFilters) - Update filters
+- deleteStock(symbol) - Delete and remove from array
+
+**Return:** { stocks, loading, error, fetchStocks, refetchStock, applyFilters, deleteStock }
+
+Include useEffect to fetch when filters change.
+Provide complete code with error handling.
+```
+
+---
+
+### **For a Page:**
+
+```
+Create [PAGE_NAME] page for my Stock Trading App.
+
+**Route:** [path]
+**Layout:** [Header/Footer included?]
+**Components Used:** [List child components]
+**Hooks Used:** [List hooks]
+**Features:** [What user can do on this page]
+
+**Example:**
+```
+Create StocksPage.jsx
+
+**Route:** /stocks
+**Layout:** Includes Header, main content area
+
+**Components:**
+- StockFilters (for filtering stocks)
+- StockTable (displays stocks)
+- Button (for CSV download)
+
+**Hooks:**
+- useStocks (for fetching and managing stocks)
+
+**Features:**
+1. Display all stocks in a table
+2. Filter by trend, price range, risk-reward ratio
+3. Download filtered stocks as CSV
+4. Refetch individual stocks
+5. Show loading spinner while fetching
+6. Show error message if API fails
+
+**Layout:**
+- Header at top
+- Filters in a sidebar or top bar
+- Download CSV button above table
+- Stock table in main area
+
+Provide complete code including imports, hooks usage, and basic styling.
+```
+
+---
+
+## 📊 PROGRESS TRACKING TEMPLATE
+
+Use this to keep track of what's done:
+
+```
+**COMPLETED FILES:**
+
+**Services Layer:**
+- ✅ api.js (Axios config)
+- ✅ stockService.js (Stock API calls)
+- ✅ watchlistService.js (Watchlist API calls)
+
+**Hooks:**
+- ✅ useStocks.js
+- ✅ useWatchlists.js
+- ⬜ useFilters.js
+
+**Components - Common:**
+- ✅ Loading.jsx
+- ✅ ErrorMessage.jsx
+- ⬜ Button.jsx
+- ⬜ ConfirmDialog.jsx
+
+**Components - Layout:**
+- ⬜ Header.jsx
+- ⬜ Sidebar.jsx
+- ⬜ Footer.jsx
+
+**Components - Stocks:**
+- ⬜ StockTable.jsx
+- ⬜ StockRow.jsx
+- ⬜ StockFilters.jsx
+- ⬜ StockDetails.jsx
+
+**Components - Watchlists:**
+- ⬜ WatchlistList.jsx
+- ⬜ WatchlistCard.jsx
+- ⬜ CreateWatchlistModal.jsx
+- ⬜ EditWatchlistModal.jsx
+
+**Pages:**
+- ⬜ Dashboard.jsx
+- ⬜ StocksPage.jsx
+- ⬜ WatchlistsPage.jsx
+- ⬜ NotFound.jsx
+
+**Utils:**
+- ⬜ csvExport.js
+- ⬜ formatters.js
+- ⬜ validators.js
+- ⬜ constants.js
+
+**Context:**
+- ⬜ StockContext.jsx
+- ⬜ ThemeContext.jsx
+
+**Styles:**
+- ⬜ globals.css
+- ⬜ variables.css
+- ⬜ components.css
+
+**Root Files:**
+- ⬜ App.jsx
+- ⬜ main.jsx
+- ⬜ routes.jsx
+```
+
+---
+
+## 🚀 USAGE WORKFLOW
+
+### **Step 1: Start with Base Prompt**
+Use the BASE PROMPT with the first AI (ChatGPT, Claude, etc.)
+
+### **Step 2: Request Specific Files**
+Use SPECIFIC FILE REQUEST prompts for each component/service/hook
+
+### **Step 3: Update Progress**
+Mark completed files in PROGRESS TRACKING
+
+### **Step 4: Switch AI if Needed**
+Use CONTINUATION PROMPT with new AI + attach PROGRESS TRACKING
+
+### **Step 5: Continue Building**
+Request next file using SPECIFIC FILE REQUEST
+
+---
+
+## 💡 TIPS FOR BEST RESULTS
+
+1. **Be Specific:** Always mention exact file paths and component names
+2. **Include Context:** Always reference existing hooks/services the component should use
+3. **One File at a Time:** Request one complete file per prompt for better quality
+4. **Copy Progress:** Always paste your PROGRESS TRACKING when switching AIs
+5. **Test Immediately:** Test each component before moving to the next
+6. **Request Styling:** Always ask for CSS/styling to be included
+7. **Ask for Complete Code:** Specify "complete code with all imports"
+
+---
+
+## 🔧 DEBUGGING PROMPT
+
+If something doesn't work:
+
+```
+I have an issue with [COMPONENT/FILE NAME] in my Stock Trading App.
+
+**Problem:** [Describe the error or issue]
+
+**Current Code:**
+```[paste your code]```
+
+**Expected Behavior:** [What should happen]
+
+**Error Message:** [If any]
+
+**Files Involved:**
+- [List related files]
+
+**Context:** This is a React + Vite app with Axios for API calls. Backend is at http://localhost:5000/api.
+
+Please provide the fix with explanation.
+```
+
+---
+
+## 📝 EXAMPLE USAGE SEQUENCE
+
+**With First AI (Claude):**
+```
+[BASE PROMPT]
+Current Progress: Starting from scratch
+What I Need: Create api.js service with Axios configuration
+```
+
+**Next Request to Same AI:**
+```
+Files Completed: api.js
+What I Need: Create stockService.js that uses the api instance from api.js
+```
+
+**Next Request:**
+```
+Files Completed: api.js, stockService.js, watchlistService.js
+What I Need: Create useStocks.js hook that uses stockService
+```
+
+**Switching to ChatGPT:**
+```
+[CONTINUATION PROMPT]
+Files Already Completed:
+- ✅ api.js, stockService.js, watchlistService.js
+- ✅ useStocks.js, useWatchlists.js
+- ✅ Loading.jsx, ErrorMessage.jsx
+
+What I Need Now: Create StockTable.jsx component
+```
+
+---
+
+## 🎯 QUALITY CHECKLIST
+
+Before accepting any code from AI, verify:
+- ✅ All imports are included
+- ✅ PropTypes or JSDoc comments present
+- ✅ Error handling included
+- ✅ Loading states managed
+- ✅ CSS styling included (inline or separate)
+- ✅ Uses existing hooks/services correctly
+- ✅ Follows React best practices
+- ✅ Responsive design considered
+- ✅ No hardcoded values (uses constants)
+- ✅ Console logs removed (except for errors)
+
+---
+
+## 📦 FINAL INTEGRATION PROMPT
+
+When all files are done:
+
+```
+I have completed all individual components for my Stock Trading App. Now I need to integrate everything.
+
+**Files Ready:**
+[List all completed files]
+
+**What I Need:**
+1. Complete App.jsx with routing
+2. Complete main.jsx entry point
+3. Integration of all context providers
+4. Final CSS adjustments
+5. .env.example file
+
+**Requirements:**
+- All routes properly configured
+- Context providers wrapping the app
+- Proper error boundaries
+- 404 page for unknown routes
+- Clean and organized
+
+Provide the final integration code.
+```
+
+---
+
+## 🎉 SUCCESS!
+
+With these prompts, you can:
+✅ Build your frontend across multiple AI sessions
+✅ Switch between different AIs seamlessly
+✅ Track progress systematically
+✅ Get consistent, high-quality code
+✅ Debug issues effectively
+
+**Save this document and reuse these prompts for any React project!**

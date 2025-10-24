@@ -281,3 +281,24 @@ curl -X POST http://localhost:5000/api/watchlists \
 ## License
 
 MIT
+
+
+
+
+# 1. Navigate to server folder
+cd server
+
+# 2. Install dependencies
+npm install
+
+# 3. Create .env file and add your Finnhub API key
+cp .env.example .env
+
+# 4. Start MongoDB
+mongod
+
+# 5. Run development server
+npm run dev
+
+# 6. Fetch initial stock data (for 2700 stocks - takes ~45 mins)
+npm run fetch-all

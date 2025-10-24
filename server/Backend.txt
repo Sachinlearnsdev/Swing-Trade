@@ -1,0 +1,586 @@
+# Complete Backend Folder Structure & Flow
+
+## 📁 Folder Structure
+
+```
+/server/
+│
+├── config/
+│   └── db.js
+│
+├── controllers/
+│   ├── stockController.js
+│   └── watchlistController.js
+│
+├── models/
+│   ├── Stock.js
+│   └── Watchlist.js
+│
+├── routes/
+│   ├── stockRoutes.js
+│   └── watchlistRoutes.js
+│
+├── utils/
+│   ├── finnhub.js
+│   ├── rateLimiter.js
+│   └── technicalIndicators.js
+│
+├── scripts/
+│   └── fetchAllStocks.js
+│
+├── server.js
+├── package.json
+├── .env
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 📄 Detailed File Contents & Flow
+
+### 1️⃣ **Entry Point: `server.js`**
+
+**Purpose:** Main application entry point that starts the Express server
+
+**Contains:**
+- Load environment variables (`dotenv`)
+- Import Express and middleware (cors, body-parser)
+- Connect to MongoDB database
+- Register API routes
+- Set up cron jobs for scheduled tasks
+- Start the HTTP server
+
+**Flow:**
+```
+START
+  ↓
+Load .env → Connect MongoDB → Setup Middleware → Register Routes → Start Server
+```
+
+**Key Code:**
+```javascript
+require('dotenv').config();
+const express = require('express');
+const connectDB = require('./config/db');
+const stockRoutes = require('./routes/stockRoutes');
+const watchlistRoutes = require('./routes/watchlistRoutes');
+
+connectDB(); // Connect to MongoDB
+app.use('/api/stocks', stockRoutes); // Register routes
+app.listen(PORT); // Start server
+```
+
+---
+
+### 2️⃣ **Configuration: `config/db.js`**
+
+**Purpose:** Handle MongoDB connection
+
+**Contains:**
+- MongoDB connection string from environment
+- Connection options
+- Error handling for failed connections
+
+**Flow:**
+```
+Load MONGODB_URI from .env → Connect using Mongoose → Log success/error
+```
+
+**Key Code:**
+```javascript
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch((err) => console.error(err));
+```
+
+---
+
+### 3️⃣ **Models: `models/Stock.js` & `models/Watchlist.js`**
+
+**Purpose:** Define database schemas and data structure
+
+#### **Stock.js**
+**Contains:**
+- Stock schema with fields:
+  - symbol, companyName, currentPrice
+  - entryPrice, stopLoss, targetPrice
+  - successProbability, riskToReward, trend
+  - ema20, ema50, rsi, macd
+  - volume, marketCap, lastFetched
+- Indexes for faster queries (symbol, trend, lastFetched)
+- Validation rules
+
+**Schema Structure:**
+```javascript
+{
+  symbol: String (required, unique),
+  currentPrice: Number (required),
+  trend: Enum ['Uptrend', 'Downtrend', 'Neutral'],
+  riskToReward: Number,
+  lastFetched: Date,
+  // ... other fields
+}
+```
+
+#### **Watchlist.js**
+**Contains:**
+- Watchlist schema with fields:
+  - name, description
+  - stocks (array of Stock IDs - references)
+  - stockSymbols (array of symbol strings)
+  - lastRefetched
+- Population setup for fetching related stocks
+
+**Schema Structure:**
+```javascript
+{
+  name: String (required),
+  stocks: [ObjectId] (references Stock model),
+  stockSymbols: [String],
+  lastRefetched: Date
+}
+```
+
+---
+
+### 4️⃣ **Utilities: `utils/` folder**
+
+#### **A. `finnhub.js`**
+**Purpose:** Wrapper for Finnhub API calls
+
+**Contains:**
+- API configuration (base URL, API key)
+- Methods for different API endpoints:
+  - `getQuote(symbol)` - Get current price
+  - `getCompanyProfile(symbol)` - Get company info
+  - `getBasicFinancials(symbol)` - Get financial metrics
+  - `getCandles(symbol, from, to)` - Get historical data
+- Error handling for failed API calls
+
+**Flow:**
+```
+Request → Build URL with params → Add API key → Make HTTP request → Return data
+```
+
+**Key Methods:**
+```javascript
+async getQuote(symbol) {
+  // Returns: { c: currentPrice, h: high, l: low, o: open, v: volume }
+}
+
+async getCandles(symbol, resolution, from, to) {
+  // Returns: { c: [closes], h: [highs], l: [lows], ... }
+}
+```
+
+---
+
+#### **B. `rateLimiter.js`**
+**Purpose:** Control API call rate to respect Finnhub limits (60/min)
+
+**Contains:**
+- Rate limit configuration (calls per minute)
+- Delay calculation (60s / 60 calls = 1s delay)
+- `sleep()` method for pausing execution
+- `execute()` method for single API call with delay
+- `executeBatch()` method for processing arrays
+
+**Flow:**
+```
+Call API → Wait (delay) → Call next API → Repeat
+```
+
+**Key Code:**
+```javascript
+delay = (60 * 1000) / callsPerMinute; // 1000ms between calls
+
+async execute(fn) {
+  const result = await fn();
+  await sleep(this.delay); // Wait before next call
+  return result;
+}
+```
+
+---
+
+#### **C. `technicalIndicators.js`**
+**Purpose:** Calculate trading indicators from price data
+
+**Contains:**
+- **EMA calculation** (20-day & 50-day)
+- **RSI calculation** (14-day default)
+- **MACD calculation** (12, 26, 9 periods)
+- **Trend determination** logic
+- **Risk-to-Reward calculation**
+- **Success Probability calculation** (custom formula)
+
+**Flow:**
+```
+Historical Prices → Calculate EMA/RSI/MACD → Determine Trend → Calculate R:R → Calculate Success %
+```
+
+**Key Methods:**
+```javascript
+calculateEMA(prices, period) {
+  // Input: [100, 102, 105, ...]
+  // Output: 103.5 (latest EMA value)
+}
+
+determineTrend(ema20, ema50, currentPrice) {
+  if (price > ema20 && ema20 > ema50) return 'Uptrend';
+  if (price < ema20 && ema20 < ema50) return 'Downtrend';
+  return 'Neutral';
+}
+
+calculateRiskToReward(entry, stopLoss, target) {
+  risk = |entry - stopLoss|;
+  reward = |target - entry|;
+  return reward / risk; // e.g., 2.5 (means 2.5:1 R:R)
+}
+
+calculateSuccessProbability(rsi, trend, riskToReward) {
+  // Base: 50%
+  // +15% if Uptrend, -15% if Downtrend
+  // +10% if RSI < 30 (oversold)
+  // +10% if R:R >= 3
+  // Returns: 0-100
+}
+```
+
+---
+
+### 5️⃣ **Controllers: `controllers/` folder**
+
+#### **A. `stockController.js`**
+**Purpose:** Business logic for stock operations
+
+**Contains 4 main functions:**
+
+##### **1. `getStocks(req, res)`**
+**Purpose:** Retrieve stocks from database with optional filters
+
+**Flow:**
+```
+Receive request → Parse query params (trend, price range, R:R) → 
+Build MongoDB filter → Query database → Return filtered stocks
+```
+
+**Example Request:**
+```
+GET /api/stocks?trend=Uptrend&minRiskReward=2&minPrice=50
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 45,
+  "data": [...]
+}
+```
+
+---
+
+##### **2. `refetchStock(req, res)`**
+**Purpose:** Refresh data for a single stock
+
+**Flow:**
+```
+Get symbol from URL → Call Finnhub API → Calculate indicators → 
+Update/Insert in DB → Return updated stock
+```
+
+**Steps:**
+1. Extract symbol from `req.params`
+2. Call `finnhubAPI.getQuote(symbol)`
+3. Call `finnhubAPI.getCandles(symbol)` for historical data
+4. Calculate EMA, RSI, MACD using `technicalIndicators`
+5. Determine trend and success probability
+6. Update MongoDB using `findOneAndUpdate()`
+
+**Example Request:**
+```
+GET /api/stocks/refetch/AAPL
+```
+
+---
+
+##### **3. `fetchMultipleStocks(req, res)`**
+**Purpose:** Fetch data for multiple stocks with rate limiting
+
+**Flow:**
+```
+Receive array of symbols → Loop through each → Apply rate limiter → 
+Fetch data → Calculate indicators → Save to DB → Track success/failed
+```
+
+**Steps:**
+1. Get `symbols` array from request body
+2. Loop through each symbol
+3. Use `rateLimiter.execute()` for each call (1s delay)
+4. Track successful and failed fetches
+5. Return summary of results
+
+**Example Request:**
+```
+POST /api/stocks/fetch-multiple
+Body: { "symbols": ["AAPL", "MSFT", "GOOGL"] }
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Fetched 3 out of 3 stocks",
+  "results": {
+    "success": ["AAPL", "MSFT", "GOOGL"],
+    "failed": []
+  }
+}
+```
+
+---
+
+##### **4. `deleteStock(req, res)`**
+**Purpose:** Remove a stock from database
+
+**Flow:**
+```
+Get symbol → Delete from MongoDB → Return confirmation
+```
+
+---
+
+#### **B. `watchlistController.js`**
+**Purpose:** Business logic for watchlist operations
+
+**Contains 6 main functions:**
+
+##### **1. `createWatchlist(req, res)`**
+**Flow:**
+```
+Receive name & stock symbols → Find stocks in DB → 
+Create watchlist with stock references → Save to DB
+```
+
+##### **2. `getWatchlists(req, res)`**
+**Flow:**
+```
+Query all watchlists → Populate stock details → Return with full stock data
+```
+
+##### **3. `getWatchlist(req, res)`**
+**Flow:**
+```
+Get watchlist ID → Find in DB → Populate stocks → Return single watchlist
+```
+
+##### **4. `updateWatchlist(req, res)`**
+**Flow:**
+```
+Get watchlist ID → Update name/symbols → Find new stocks → Update DB
+```
+
+##### **5. `refetchWatchlist(req, res)`**
+**Purpose:** Refresh all stocks in a watchlist
+
+**Flow:**
+```
+Get watchlist ID → Get all symbols → Loop through symbols → 
+Apply rate limiter → Fetch each stock → Update DB → 
+Update lastRefetched timestamp
+```
+
+**Steps:**
+1. Find watchlist by ID
+2. Get `stockSymbols` array
+3. Loop through each symbol with rate limiting
+4. Call `fetchStockData()` for each
+5. Update each stock in database
+6. Update watchlist's `lastRefetched` field
+7. Return summary (success/failed counts)
+
+##### **6. `deleteWatchlist(req, res)`**
+**Flow:**
+```
+Get watchlist ID → Delete from DB → Return confirmation
+```
+
+---
+
+### 6️⃣ **Routes: `routes/` folder**
+
+#### **A. `stockRoutes.js`**
+**Purpose:** Define API endpoints for stocks
+
+**Routes:**
+```javascript
+GET    /api/stocks                    → getStocks()
+GET    /api/stocks/refetch/:symbol    → refetchStock()
+POST   /api/stocks/fetch-multiple     → fetchMultipleStocks()
+DELETE /api/stocks/:symbol            → deleteStock()
+```
+
+**Flow:**
+```
+HTTP Request → Match route → Call controller function → Return response
+```
+
+---
+
+#### **B. `watchlistRoutes.js`**
+**Purpose:** Define API endpoints for watchlists
+
+**Routes:**
+```javascript
+POST   /api/watchlists           → createWatchlist()
+GET    /api/watchlists           → getWatchlists()
+GET    /api/watchlists/:id       → getWatchlist()
+PUT    /api/watchlists/:id       → updateWatchlist()
+GET    /api/watchlists/:id/refetch → refetchWatchlist()
+DELETE /api/watchlists/:id       → deleteWatchlist()
+```
+
+---
+
+### 7️⃣ **Scripts: `scripts/fetchAllStocks.js`**
+
+**Purpose:** One-time script to fetch 2700 stocks
+
+**Flow:**
+```
+Connect to MongoDB → Load stock symbols array → 
+Loop through all symbols → Apply rate limiter → 
+Fetch each stock → Calculate indicators → Save to DB → 
+Log progress → Disconnect
+```
+
+**Usage:**
+```bash
+npm run fetch-all
+```
+
+**Time Estimation:**
+```
+2700 stocks ÷ 60 calls/min = 45 minutes
+```
+
+---
+
+## 🔄 Complete Data Flow Example
+
+### **Scenario: User refetches a watchlist**
+
+```
+1. Frontend sends: GET /api/watchlists/123/refetch
+
+2. server.js receives request → routes to watchlistRoutes.js
+
+3. watchlistRoutes.js matches route → calls refetchWatchlist()
+
+4. refetchWatchlist() in watchlistController.js:
+   ├─ Finds watchlist in MongoDB
+   ├─ Gets stockSymbols: ["AAPL", "MSFT", "GOOGL"]
+   └─ Loops through each symbol
+
+5. For each symbol:
+   ├─ rateLimiter.execute() adds 1s delay
+   ├─ finnhub.getQuote("AAPL") → Gets current price
+   ├─ finnhub.getCandles("AAPL") → Gets historical data
+   ├─ technicalIndicators.calculateEMA() → Calculates EMA
+   ├─ technicalIndicators.calculateRSI() → Calculates RSI
+   ├─ technicalIndicators.determineTrend() → Determines trend
+   ├─ technicalIndicators.calculateRiskToReward() → Calculates R:R
+   └─ Stock.findOneAndUpdate() → Saves to MongoDB
+
+6. Update watchlist.lastRefetched in MongoDB
+
+7. Return response:
+   {
+     "success": true,
+     "message": "Refetched 3 out of 3 stocks",
+     "results": { "success": [...], "failed": [] }
+   }
+```
+
+---
+
+## 📊 Database Flow
+
+### **Stock Collection**
+```
+Symbol (Index) → Query fast by symbol
+Trend (Index) → Filter by trend quickly
+LastFetched (Index) → Sort by freshness
+```
+
+### **Watchlist Collection**
+```
+Name → Identify watchlist
+Stocks (References) → Link to Stock documents
+StockSymbols → Store symbols for refetching
+```
+
+**Relationship:**
+```
+Watchlist → has many → Stocks (via ObjectId references)
+```
+
+---
+
+## ⚙️ Environment Variables (`.env`)
+
+```env
+PORT=5000                                    # Server port
+MONGODB_URI=mongodb://localhost:27017/...   # Database URL
+FINNHUB_API_KEY=your_key                    # API authentication
+API_RATE_LIMIT=60                           # Calls per minute
+```
+
+---
+
+## 🎯 Key Concepts
+
+### **Rate Limiting**
+- Prevents exceeding Finnhub's 60 calls/min limit
+- Adds ~1 second delay between each API call
+- For 2700 stocks: 2700 ÷ 60 = 45 minutes
+
+### **Technical Indicators**
+- **EMA**: Smooth price trends (20-day & 50-day)
+- **RSI**: Overbought/oversold (0-100 scale)
+- **MACD**: Momentum indicator
+- **Trend**: Determined by EMA crossovers
+
+### **Database Indexing**
+- Speeds up queries on frequently searched fields
+- Indexes: symbol, trend, lastFetched
+
+### **Error Handling**
+- Try-catch blocks in all async functions
+- Log errors to console
+- Return meaningful error messages to frontend
+
+---
+
+## 📝 Summary
+
+**File Count:** 15 files
+**Main Components:** 
+- 1 Server (entry point)
+- 1 Config (database)
+- 2 Models (schemas)
+- 3 Utils (API, rate limiter, indicators)
+- 2 Controllers (business logic)
+- 2 Routes (endpoints)
+- 1 Script (batch fetch)
+- 3 Config files (.env, .gitignore, package.json)
+
+**Data Flow:**
+```
+Request → Route → Controller → Utils/Models → Database → Response
+```
+
+This structure follows **MVC pattern** (Model-View-Controller) with separation of concerns for maintainability and scalability.

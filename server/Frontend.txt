@@ -1,0 +1,1607 @@
+# Complete Frontend Folder Structure & Flow
+
+## 📁 Folder Structure
+
+```
+/client/
+│
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+│
+├── src/
+│   │
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Header.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   └── Footer.jsx
+│   │   │
+│   │   ├── stocks/
+│   │   │   ├── StockTable.jsx
+│   │   │   ├── StockRow.jsx
+│   │   │   ├── StockFilters.jsx
+│   │   │   └── StockDetails.jsx
+│   │   │
+│   │   ├── watchlists/
+│   │   │   ├── WatchlistList.jsx
+│   │   │   ├── WatchlistCard.jsx
+│   │   │   ├── CreateWatchlistModal.jsx
+│   │   │   └── EditWatchlistModal.jsx
+│   │   │
+│   │   └── common/
+│   │       ├── Button.jsx
+│   │       ├── Loading.jsx
+│   │       ├── ErrorMessage.jsx
+│   │       └── ConfirmDialog.jsx
+│   │
+│   ├── pages/
+│   │   ├── Dashboard.jsx
+│   │   ├── StocksPage.jsx
+│   │   ├── WatchlistsPage.jsx
+│   │   └── NotFound.jsx
+│   │
+│   ├── services/
+│   │   ├── api.js
+│   │   ├── stockService.js
+│   │   └── watchlistService.js
+│   │
+│   ├── hooks/
+│   │   ├── useStocks.js
+│   │   ├── useWatchlists.js
+│   │   └── useFilters.js
+│   │
+│   ├── context/
+│   │   ├── StockContext.jsx
+│   │   └── ThemeContext.jsx
+│   │
+│   ├── utils/
+│   │   ├── formatters.js
+│   │   ├── validators.js
+│   │   ├── csvExport.js
+│   │   └── constants.js
+│   │
+│   ├── styles/
+│   │   ├── globals.css
+│   │   ├── components.css
+│   │   └── variables.css
+│   │
+│   ├── App.jsx
+│   ├── index.jsx
+│   └── routes.jsx
+│
+├── package.json
+├── .env
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 📄 Detailed File Contents & Flow
+
+---
+
+## 🚀 Entry Points
+
+### **1. `public/index.html`**
+
+**Purpose:** HTML template for React app
+
+**Contains:**
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Trading App</title>
+</head>
+<body>
+  <div id="root"></div>
+  <!-- React app mounts here -->
+</body>
+</html>
+```
+
+---
+
+### **2. `src/index.jsx`**
+
+**Purpose:** React app entry point
+
+**Contains:**
+- Import React and ReactDOM
+- Import main App component
+- Import global styles
+- Render App to DOM
+
+**Code:**
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './styles/globals.css';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+---
+
+### **3. `src/App.jsx`**
+
+**Purpose:** Main application component with routing
+
+**Contains:**
+- Router setup (React Router)
+- Context providers (StockContext, ThemeContext)
+- Layout structure
+- Route definitions
+
+**Structure:**
+```javascript
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { StockProvider } from './context/StockContext';
+import Header from './components/layout/Header';
+import Dashboard from './pages/Dashboard';
+import StocksPage from './pages/StocksPage';
+import WatchlistsPage from './pages/WatchlistsPage';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <StockProvider>
+        <Header />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/stocks" element={<StocksPage />} />
+          <Route path="/watchlists" element={<WatchlistsPage />} />
+        </Routes>
+      </StockProvider>
+    </BrowserRouter>
+  );
+}
+```
+
+---
+
+## 🛠️ Services Layer (API Communication)
+
+### **4. `src/services/api.js`**
+
+**Purpose:** Base API configuration with Axios
+
+**Contains:**
+- Axios instance with base URL
+- Request/response interceptors
+- Error handling
+- Token management (if needed)
+
+**Code:**
+```javascript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor (add auth token if needed)
+api.interceptors.request.use(
+  (config) => {
+    // Add token to headers if exists
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor (handle errors globally)
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+```
+
+---
+
+### **5. `src/services/stockService.js`**
+
+**Purpose:** All stock-related API calls
+
+**Contains:**
+
+**Methods:**
+```javascript
+import api from './api';
+
+const stockService = {
+  // Get all stocks with optional filters
+  getStocks: async (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    return api.get(`/stocks?${params}`);
+  },
+
+  // Refetch single stock
+  refetchStock: async (symbol) => {
+    return api.get(`/stocks/refetch/${symbol}`);
+  },
+
+  // Fetch multiple stocks
+  fetchMultipleStocks: async (symbols) => {
+    return api.post('/stocks/fetch-multiple', { symbols });
+  },
+
+  // Delete stock
+  deleteStock: async (symbol) => {
+    return api.delete(`/stocks/${symbol}`);
+  },
+};
+
+export default stockService;
+```
+
+**Usage in Components:**
+```javascript
+// In a component
+import stockService from '../services/stockService';
+
+const fetchData = async () => {
+  const data = await stockService.getStocks({ trend: 'Uptrend' });
+  setStocks(data.data);
+};
+```
+
+---
+
+### **6. `src/services/watchlistService.js`**
+
+**Purpose:** All watchlist-related API calls
+
+**Contains:**
+
+**Methods:**
+```javascript
+import api from './api';
+
+const watchlistService = {
+  // Get all watchlists
+  getWatchlists: async () => {
+    return api.get('/watchlists');
+  },
+
+  // Get single watchlist
+  getWatchlist: async (id) => {
+    return api.get(`/watchlists/${id}`);
+  },
+
+  // Create watchlist
+  createWatchlist: async (data) => {
+    return api.post('/watchlists', data);
+  },
+
+  // Update watchlist
+  updateWatchlist: async (id, data) => {
+    return api.put(`/watchlists/${id}`, data);
+  },
+
+  // Refetch watchlist
+  refetchWatchlist: async (id) => {
+    return api.get(`/watchlists/${id}/refetch`);
+  },
+
+  // Delete watchlist
+  deleteWatchlist: async (id) => {
+    return api.delete(`/watchlists/${id}`);
+  },
+};
+
+export default watchlistService;
+```
+
+---
+
+## 🎣 Custom Hooks
+
+### **7. `src/hooks/useStocks.js`**
+
+**Purpose:** Reusable hook for stock operations
+
+**Contains:**
+- State management for stocks
+- Loading and error states
+- Fetch, refetch, filter functions
+
+**Code:**
+```javascript
+import { useState, useEffect } from 'react';
+import stockService from '../services/stockService';
+
+const useStocks = (initialFilters = {}) => {
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState(initialFilters);
+
+  // Fetch stocks
+  const fetchStocks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await stockService.getStocks(filters);
+      setStocks(response.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refetch single stock
+  const refetchStock = async (symbol) => {
+    try {
+      const response = await stockService.refetchStock(symbol);
+      // Update stock in array
+      setStocks(prev => 
+        prev.map(s => s.symbol === symbol ? response.data : s)
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Apply filters
+  const applyFilters = (newFilters) => {
+    setFilters(newFilters);
+  };
+
+  useEffect(() => {
+    fetchStocks();
+  }, [filters]);
+
+  return {
+    stocks,
+    loading,
+    error,
+    fetchStocks,
+    refetchStock,
+    applyFilters,
+  };
+};
+
+export default useStocks;
+```
+
+**Usage:**
+```javascript
+const { stocks, loading, refetchStock } = useStocks({ trend: 'Uptrend' });
+```
+
+---
+
+### **8. `src/hooks/useWatchlists.js`**
+
+**Purpose:** Reusable hook for watchlist operations
+
+**Contains:**
+- State management for watchlists
+- CRUD operations
+- Refetch functionality
+
+**Code:**
+```javascript
+import { useState, useEffect } from 'react';
+import watchlistService from '../services/watchlistService';
+
+const useWatchlists = () => {
+  const [watchlists, setWatchlists] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchWatchlists = async () => {
+    setLoading(true);
+    try {
+      const response = await watchlistService.getWatchlists();
+      setWatchlists(response.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createWatchlist = async (data) => {
+    try {
+      await watchlistService.createWatchlist(data);
+      await fetchWatchlists(); // Refresh list
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const refetchWatchlist = async (id) => {
+    try {
+      await watchlistService.refetchWatchlist(id);
+      await fetchWatchlists(); // Refresh list
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const deleteWatchlist = async (id) => {
+    try {
+      await watchlistService.deleteWatchlist(id);
+      setWatchlists(prev => prev.filter(w => w._id !== id));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchWatchlists();
+  }, []);
+
+  return {
+    watchlists,
+    loading,
+    error,
+    createWatchlist,
+    refetchWatchlist,
+    deleteWatchlist,
+  };
+};
+
+export default useWatchlists;
+```
+
+---
+
+### **9. `src/hooks/useFilters.js`**
+
+**Purpose:** Manage filter state and logic
+
+**Contains:**
+- Filter state
+- Filter validation
+- Reset filters
+
+**Code:**
+```javascript
+import { useState } from 'react';
+
+const useFilters = (initialFilters = {}) => {
+  const [filters, setFilters] = useState(initialFilters);
+
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const resetFilters = () => {
+    setFilters(initialFilters);
+  };
+
+  const clearFilter = (key) => {
+    const newFilters = { ...filters };
+    delete newFilters[key];
+    setFilters(newFilters);
+  };
+
+  return {
+    filters,
+    updateFilter,
+    resetFilters,
+    clearFilter,
+  };
+};
+
+export default useFilters;
+```
+
+---
+
+## 🧩 Components
+
+### **Layout Components**
+
+### **10. `src/components/layout/Header.jsx`**
+
+**Purpose:** Top navigation bar
+
+**Contains:**
+- App logo/title
+- Navigation links (Dashboard, Stocks, Watchlists)
+- User menu (if auth)
+- Theme toggle
+
+**Structure:**
+```javascript
+import { Link } from 'react-router-dom';
+
+const Header = () => {
+  return (
+    <header className="header">
+      <div className="logo">Stock Trading App</div>
+      <nav>
+        <Link to="/">Dashboard</Link>
+        <Link to="/stocks">Stocks</Link>
+        <Link to="/watchlists">Watchlists</Link>
+      </nav>
+    </header>
+  );
+};
+```
+
+---
+
+### **11. `src/components/layout/Sidebar.jsx`**
+
+**Purpose:** Side navigation (optional, for filters)
+
+**Contains:**
+- Quick filters
+- Watchlist shortcuts
+- Statistics summary
+
+---
+
+### **Stock Components**
+
+### **12. `src/components/stocks/StockTable.jsx`**
+
+**Purpose:** Display stocks in a table
+
+**Contains:**
+- Table headers (Symbol, Price, Trend, R:R, Success %, Actions)
+- Sortable columns
+- Pagination
+- Map stocks to StockRow components
+
+**Structure:**
+```javascript
+import StockRow from './StockRow';
+
+const StockTable = ({ stocks, onRefetch, onDelete }) => {
+  return (
+    <table className="stock-table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Company</th>
+          <th>Price</th>
+          <th>Trend</th>
+          <th>R:R Ratio</th>
+          <th>Success %</th>
+          <th>Last Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {stocks.map(stock => (
+          <StockRow 
+            key={stock._id} 
+            stock={stock}
+            onRefetch={onRefetch}
+            onDelete={onDelete}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+};
+```
+
+---
+
+### **13. `src/components/stocks/StockRow.jsx`**
+
+**Purpose:** Single stock row in table
+
+**Contains:**
+- Display stock data
+- Refetch button
+- Delete button
+- Color coding for trends
+- Expand for details
+
+**Structure:**
+```javascript
+const StockRow = ({ stock, onRefetch, onDelete }) => {
+  const getTrendColor = (trend) => {
+    if (trend === 'Uptrend') return 'green';
+    if (trend === 'Downtrend') return 'red';
+    return 'gray';
+  };
+
+  return (
+    <tr>
+      <td>{stock.symbol}</td>
+      <td>{stock.companyName}</td>
+      <td>${stock.currentPrice.toFixed(2)}</td>
+      <td style={{ color: getTrendColor(stock.trend) }}>
+        {stock.trend}
+      </td>
+      <td>{stock.riskToReward}</td>
+      <td>{stock.successProbability}%</td>
+      <td>{new Date(stock.lastFetched).toLocaleString()}</td>
+      <td>
+        <button onClick={() => onRefetch(stock.symbol)}>Refetch</button>
+        <button onClick={() => onDelete(stock.symbol)}>Delete</button>
+      </td>
+    </tr>
+  );
+};
+```
+
+---
+
+### **14. `src/components/stocks/StockFilters.jsx`**
+
+**Purpose:** Filter controls for stocks
+
+**Contains:**
+- Trend dropdown (Uptrend, Downtrend, Neutral)
+- R:R ratio range sliders
+- Price range inputs
+- Success probability slider
+- Apply/Reset buttons
+
+**Structure:**
+```javascript
+const StockFilters = ({ onFilterChange, onReset }) => {
+  const [trend, setTrend] = useState('');
+  const [minRiskReward, setMinRiskReward] = useState('');
+  const [maxRiskReward, setMaxRiskReward] = useState('');
+
+  const handleApply = () => {
+    onFilterChange({
+      trend,
+      minRiskReward,
+      maxRiskReward,
+    });
+  };
+
+  return (
+    <div className="filters">
+      <select value={trend} onChange={e => setTrend(e.target.value)}>
+        <option value="">All Trends</option>
+        <option value="Uptrend">Uptrend</option>
+        <option value="Downtrend">Downtrend</option>
+        <option value="Neutral">Neutral</option>
+      </select>
+
+      <input 
+        type="number" 
+        placeholder="Min R:R"
+        value={minRiskReward}
+        onChange={e => setMinRiskReward(e.target.value)}
+      />
+
+      <button onClick={handleApply}>Apply Filters</button>
+      <button onClick={onReset}>Reset</button>
+    </div>
+  );
+};
+```
+
+---
+
+### **15. `src/components/stocks/StockDetails.jsx`**
+
+**Purpose:** Detailed view of a single stock (modal/drawer)
+
+**Contains:**
+- All stock information
+- Technical indicators (EMA, RSI, MACD)
+- Charts (if using charting library)
+- Entry/Stop Loss/Target prices
+- Historical performance
+
+---
+
+### **Watchlist Components**
+
+### **16. `src/components/watchlists/WatchlistList.jsx`**
+
+**Purpose:** Display all watchlists
+
+**Contains:**
+- List/Grid of watchlists
+- Create new watchlist button
+- Map to WatchlistCard components
+
+**Structure:**
+```javascript
+import WatchlistCard from './WatchlistCard';
+
+const WatchlistList = ({ watchlists, onRefetch, onDelete }) => {
+  return (
+    <div className="watchlist-grid">
+      {watchlists.map(watchlist => (
+        <WatchlistCard
+          key={watchlist._id}
+          watchlist={watchlist}
+          onRefetch={onRefetch}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  );
+};
+```
+
+---
+
+### **17. `src/components/watchlists/WatchlistCard.jsx`**
+
+**Purpose:** Single watchlist card
+
+**Contains:**
+- Watchlist name
+- Stock count
+- Last refetched time
+- Quick stats (avg R:R, trend distribution)
+- Refetch button
+- Edit button
+- Delete button
+
+**Structure:**
+```javascript
+const WatchlistCard = ({ watchlist, onRefetch, onDelete }) => {
+  return (
+    <div className="watchlist-card">
+      <h3>{watchlist.name}</h3>
+      <p>{watchlist.description}</p>
+      <p>{watchlist.stocks.length} stocks</p>
+      <p>Last updated: {new Date(watchlist.lastRefetched).toLocaleString()}</p>
+      
+      <div className="actions">
+        <button onClick={() => onRefetch(watchlist._id)}>
+          Refetch All
+        </button>
+        <button onClick={() => onDelete(watchlist._id)}>
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+### **18. `src/components/watchlists/CreateWatchlistModal.jsx`**
+
+**Purpose:** Modal to create new watchlist
+
+**Contains:**
+- Form with name input
+- Description textarea
+- Multi-select for stock symbols
+- Submit button
+- Cancel button
+
+**Structure:**
+```javascript
+import { useState } from 'react';
+
+const CreateWatchlistModal = ({ onClose, onCreate }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [stockSymbols, setStockSymbols] = useState([]);
+
+  const handleSubmit = () => {
+    onCreate({ name, description, stockSymbols });
+    onClose();
+  };
+
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <h2>Create Watchlist</h2>
+        <input 
+          placeholder="Watchlist Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+        />
+        <textarea 
+          placeholder="Description"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+        />
+        {/* Multi-select for stocks */}
+        <button onClick={handleSubmit}>Create</button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+### **Common Components**
+
+### **19. `src/components/common/Loading.jsx`**
+
+**Purpose:** Loading spinner
+
+**Contains:**
+```javascript
+const Loading = ({ message = 'Loading...' }) => {
+  return (
+    <div className="loading">
+      <div className="spinner"></div>
+      <p>{message}</p>
+    </div>
+  );
+};
+```
+
+---
+
+### **20. `src/components/common/ErrorMessage.jsx`**
+
+**Purpose:** Error display
+
+**Contains:**
+```javascript
+const ErrorMessage = ({ error, onRetry }) => {
+  return (
+    <div className="error">
+      <p>Error: {error}</p>
+      {onRetry && <button onClick={onRetry}>Retry</button>}
+    </div>
+  );
+};
+```
+
+---
+
+### **21. `src/components/common/Button.jsx`**
+
+**Purpose:** Reusable button component
+
+**Contains:**
+```javascript
+const Button = ({ 
+  children, 
+  variant = 'primary', 
+  loading = false,
+  onClick,
+  ...props 
+}) => {
+  return (
+    <button 
+      className={`btn btn-${variant}`}
+      onClick={onClick}
+      disabled={loading}
+      {...props}
+    >
+      {loading ? 'Loading...' : children}
+    </button>
+  );
+};
+```
+
+---
+
+## 📄 Pages
+
+### **22. `src/pages/Dashboard.jsx`**
+
+**Purpose:** Main dashboard/home page
+
+**Contains:**
+- Summary statistics
+  - Total stocks
+  - Watchlists count
+  - Top performing stocks
+  - Trend distribution (pie chart)
+- Quick actions (Refetch All, Create Watchlist)
+- Recent activity
+
+**Structure:**
+```javascript
+import { useStocks } from '../hooks/useStocks';
+import { useWatchlists } from '../hooks/useWatchlists';
+
+const Dashboard = () => {
+  const { stocks } = useStocks();
+  const { watchlists } = useWatchlists();
+
+  const stats = {
+    totalStocks: stocks.length,
+    uptrend: stocks.filter(s => s.trend === 'Uptrend').length,
+    downtrend: stocks.filter(s => s.trend === 'Downtrend').length,
+    watchlistCount: watchlists.length,
+  };
+
+  return (
+    <div className="dashboard">
+      <h1>Dashboard</h1>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Total Stocks</h3>
+          <p>{stats.totalStocks}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Uptrend</h3>
+          <p>{stats.uptrend}</p>
+        </div>
+        {/* More stats */}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+### **23. `src/pages/StocksPage.jsx`**
+
+**Purpose:** Main stocks view page
+
+**Contains:**
+- StockFilters component
+- StockTable component
+- CSV download button
+- Pagination controls
+- Fetch multiple stocks button
+
+**Structure:**
+```javascript
+import useStocks from '../hooks/useStocks';
+import StockTable from '../components/stocks/StockTable';
+import StockFilters from '../components/stocks/StockFilters';
+import { exportToCSV } from '../utils/csvExport';
+
+const StocksPage = () => {
+  const { stocks, loading, refetchStock, applyFilters } = useStocks();
+
+  const handleDownloadCSV = () => {
+    exportToCSV(stocks, 'stocks.csv');
+  };
+
+  return (
+    <div className="stocks-page">
+      <h1>All Stocks</h1>
+      
+      <StockFilters 
+        onFilterChange={applyFilters}
+        onReset={() => applyFilters({})}
+      />
+
+      <button onClick={handleDownloadCSV}>Download CSV</button>
+
+      {loading ? (
+        <Loading />
+      ) : (
+        <StockTable 
+          stocks={stocks}
+          onRefetch={refetchStock}
+        />
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+### **24. `src/pages/WatchlistsPage.jsx`**
+
+**Purpose:** Watchlists management page
+
+**Contains:**
+- Create watchlist button
+- WatchlistList component
+- Filter watchlists
+- Bulk actions
+
+**Structure:**
+```javascript
+import useWatchlists from '../hooks/useWatchlists';
+import WatchlistList from '../components/watchlists/WatchlistList';
+import CreateWatchlistModal from '../components/watchlists/CreateWatchlistModal';
+
+const WatchlistsPage = () => {
+  const { 
+    watchlists, 
+    createWatchlist, 
+    refetchWatchlist,
+    deleteWatchlist 
+  } = useWatchlists();
+  
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <div className="watchlists-page">
+      <h1>My Watchlists</h1>
+      
+      <button onClick={() => setShowModal(true)}>
+        Create Watchlist
+      </button>
+
+      <WatchlistList
+        watchlists={watchlists}
+        onRefetch={refetchWatchlist}
+        onDelete={deleteWatchlist}
+      />
+
+      {showModal && (
+        <CreateWatchlistModal
+          onClose={() => setShowModal(false)}
+          onCreate={createWatchlist}
+        />
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+## 🛠️ Utilities
+
+### **25. `src/utils/csvExport.js`**
+
+**Purpose:** Export data to CSV
+
+**Contains:**
+```javascript
+export const exportToCSV = (data, filename) => {
+  // Convert JSON to CSV
+  const headers = Object.keys(data[0]).join(',');
+  const rows = data.map(row => 
+    Object.values(row).join(',')
+  ).join('\n');
+  
+  const csv = `${headers}\n${rows}`;
+  
+  // Download
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+};
+```
+
+**Alternative:** Use `react-csv` library:
+```javascript
+import { CSVLink } from 'react-csv';
+
+<CSVLink data={stocks} filename="stocks.csv">
+  Download CSV
+</CSVLink>
+```
+
+---
+
+### **26. `src/utils/formatters.js`**
+
+**Purpose:** Format data for display
+
+**Contains:**
+```javascript
+export const formatPrice = (price) => {
+  return `$${price.toFixed(2)}`;
+};
+
+export const formatDate = (date) => {
+  return new Date(date).toLocaleDateString();
+};
+
+export const formatPercent = (value) => {
+  return `${value.toFixed(2)}%`;
+};
+
+export const getTrendIcon = (trend) => {
+  if (trend === 'Uptrend') return '📈';
+  if (trend === 'Downtrend') return '📉';
+  return '➡️';
+};
+```
+
+---
+
+### **27. `src/utils/constants.js`**
+
+**Purpose:** App-wide constants
+
+**Contains:**
+```javascript
+export const TRENDS = ['Uptrend', 'Downtrend', 'Neutral'];
+
+export const FILTER_DEFAULTS = {
+  trend: '',
+  minRiskReward: 0,
+  maxRiskReward: 10,
+  minPrice: 0,
+  maxPrice: 10000,
+};
+
+export const SORT_OPTIONS = [
+  { value: 'symbol', label: 'Symbol' },
+  { value: 'currentPrice', label: 'Price' },
+  { value: 'riskToReward', label: 'R:R Ratio' },
+  { value: 'successProbability', label: 'Success %' },
+];
+```
+
+---
+
+## 🎨 Styles
+
+### **28. `src/styles/globals.css`**
+
+**Purpose:** Global styles
+
+**Contains:**
+```css
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+```
+
+---
+
+### **29. `src/styles/variables.css`**
+
+**Purpose:** CSS variables for theming
+
+**Contains:**
+```css
+:root {
+  --primary-color: #007bff;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  
+  --uptrend-color: #28a745;
+  --downtrend-color: #dc3545;
+  --neutral-color: #6c757d;
+  
+  --border-radius: 8px;
+  --spacing: 16px;
+}
+```
+
+---
+
+## 📦 Configuration Files
+
+### **30. `package.json`**
+
+**Contains:**
+```json
+{
+  "name": "stock-trading-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0",
+    "axios": "^1.5.1",
+    "react-csv": "^2.2.2",
+    "recharts": "^2.8.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "react-scripts": "^5.0.1"
+  }
+}
+```
+
+---
+
+### **31. `.env.example`**
+
+**Contains:**
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_ENV=development
+```
+
+---
+
+## 🔄 Complete Data Flow
+
+### **User Journey: View & Filter Stocks**
+
+```
+1. User visits /stocks page
+   ↓
+2. StocksPage.jsx renders
+   ↓
+3. useStocks hook called
+   ↓
+4. useEffect triggers fetchStocks()
+   ↓
+5. stockService.getStocks() called
+   ↓
+6. api.get('/stocks') → Backend API
+   ↓
+7. Backend returns stock data
+   ↓
+8. useState updates stocks array
+   ↓
+9. StockTable renders with data
+   ↓
+10. User applies filters in StockFilters
+   ↓
+11. applyFilters() called with new filters
+   ↓
+12. useEffect detects filter change
+   ↓
+13. Fetch again with new params
+   ↓
+14. Table re-renders with filtered data
+```
+
+---
+
+### **User Journey: Refetch Single Stock**
+
+```
+1. User clicks "Refetch" button on AAPL row
+   ↓
+2. StockRow calls onRefetch('AAPL')
+   ↓
+3. refetchStock() in useStocks hook
+   ↓
+4. stockService.refetchStock('AAPL')
+   ↓
+5. api.get('/stocks/refetch/AAPL') → Backend
+   ↓
+6. Backend fetches from Finnhub
+   ↓
+7. Backend calculates indicators
+   ↓
+8. Backend updates MongoDB
+   ↓
+9. Backend returns updated stock
+   ↓
+10. Frontend updates stock in array
+   ↓
+11. StockRow re-renders with new data
+```
+
+---
+
+### **User Journey: Create Watchlist**
+
+```
+1. User clicks "Create Watchlist" button
+   ↓
+2. setShowModal(true) opens modal
+   ↓
+3. CreateWatchlistModal renders
+   ↓
+4. User fills form (name, stocks)
+   ↓
+5. User clicks "Create"
+   ↓
+6. onCreate() called with form data
+   ↓
+7. createWatchlist() in useWatchlists hook
+   ↓
+8. watchlistService.createWatchlist(data)
+   ↓
+9. api.post('/watchlists', data) → Backend
+   ↓
+10. Backend creates watchlist in MongoDB
+   ↓
+11. Backend returns new watchlist
+   ↓
+12. Frontend calls fetchWatchlists() to refresh
+   ↓
+13. WatchlistList re-renders with new watchlist
+   ↓
+14. Modal closes
+```
+
+---
+
+### **User Journey: Download CSV**
+
+```
+1. User applies filters (e.g., Uptrend only)
+   ↓
+2. Filtered stocks displayed in table
+   ↓
+3. User clicks "Download CSV"
+   ↓
+4. handleDownloadCSV() called
+   ↓
+5. exportToCSV(stocks, 'stocks.csv')
+   ↓
+6. Convert JSON to CSV format
+   ↓
+7. Create Blob and download link
+   ↓
+8. Trigger download in browser
+   ↓
+9. CSV file saved to user's computer
+```
+
+---
+
+## 🎯 Component Hierarchy
+
+```
+App.jsx
+├── Header.jsx
+├── Routes
+    ├── Dashboard.jsx
+    │   ├── StatCard (x4)
+    │   └── QuickActions
+    │
+    ├── StocksPage.jsx
+    │   ├── StockFilters.jsx
+    │   ├── Button (Download CSV)
+    │   └── StockTable.jsx
+    │       └── StockRow.jsx (x N stocks)
+    │           ├── Button (Refetch)
+    │           └── Button (Delete)
+    │
+    └── WatchlistsPage.jsx
+        ├── Button (Create Watchlist)
+        ├── CreateWatchlistModal.jsx
+        └── WatchlistList.jsx
+            └── WatchlistCard.jsx (x N watchlists)
+                ├── Button (Refetch All)
+                ├── Button (Edit)
+                └── Button (Delete)
+```
+
+---
+
+## 📊 State Management Options
+
+### **Option 1: Component State + Custom Hooks (Recommended for your app)**
+```
+✅ Simple and straightforward
+✅ Good for small-medium apps
+✅ Already implemented in useStocks, useWatchlists
+```
+
+### **Option 2: Context API**
+```javascript
+// src/context/StockContext.jsx
+import { createContext, useContext, useState } from 'react';
+
+const StockContext = createContext();
+
+export const StockProvider = ({ children }) => {
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // All stock operations here
+  
+  return (
+    <StockContext.Provider value={{ stocks, loading, ... }}>
+      {children}
+    </StockContext.Provider>
+  );
+};
+
+export const useStockContext = () => useContext(StockContext);
+```
+
+**When to use:**
+- Need to share state across many components
+- Avoid prop drilling
+
+### **Option 3: Redux (Overkill for this app)**
+```
+❌ Too complex for this use case
+❌ More boilerplate code
+✅ Good for very large apps
+```
+
+---
+
+## 🎨 UI Library Recommendations
+
+### **Option 1: Material-UI (MUI)**
+```bash
+npm install @mui/material @emotion/react @emotion/styled
+```
+
+**Pros:**
+- Professional components out of the box
+- Good documentation
+- Built-in theming
+
+**Usage:**
+```javascript
+import { Button, Table, TableRow, TextField } from '@mui/material';
+```
+
+### **Option 2: Ant Design**
+```bash
+npm install antd
+```
+
+**Pros:**
+- Rich component library
+- Good for data-heavy apps
+- Built-in tables with sorting/filtering
+
+### **Option 3: Tailwind CSS**
+```bash
+npm install -D tailwindcss
+```
+
+**Pros:**
+- Utility-first CSS
+- Fast development
+- Small bundle size
+
+### **Option 4: Plain CSS (Current approach)**
+```
+✅ No dependencies
+✅ Full control
+❌ More work to style
+```
+
+---
+
+## 📱 Responsive Design Considerations
+
+### **Mobile-First Approach:**
+
+```css
+/* Mobile (default) */
+.stock-table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .stock-table {
+    display: table;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+```
+
+---
+
+## 🧪 Testing Strategy
+
+### **Component Tests (Optional but recommended)**
+
+```javascript
+// src/components/stocks/__tests__/StockRow.test.js
+import { render, screen, fireEvent } from '@testing-library/react';
+import StockRow from '../StockRow';
+
+test('displays stock data correctly', () => {
+  const stock = {
+    symbol: 'AAPL',
+    currentPrice: 150.25,
+    trend: 'Uptrend',
+  };
+  
+  render(<StockRow stock={stock} />);
+  
+  expect(screen.getByText('AAPL')).toBeInTheDocument();
+  expect(screen.getByText('$150.25')).toBeInTheDocument();
+});
+
+test('calls refetch when button clicked', () => {
+  const mockRefetch = jest.fn();
+  const stock = { symbol: 'AAPL', ... };
+  
+  render(<StockRow stock={stock} onRefetch={mockRefetch} />);
+  
+  fireEvent.click(screen.getByText('Refetch'));
+  expect(mockRefetch).toHaveBeenCalledWith('AAPL');
+});
+```
+
+---
+
+## 🚀 Performance Optimizations
+
+### **1. Memoization**
+```javascript
+import { useMemo } from 'react';
+
+const StocksPage = () => {
+  const { stocks } = useStocks();
+  
+  // Expensive calculation - only recalculate when stocks change
+  const stats = useMemo(() => {
+    return {
+      avgPrice: stocks.reduce((sum, s) => sum + s.currentPrice, 0) / stocks.length,
+      uptrendCount: stocks.filter(s => s.trend === 'Uptrend').length,
+    };
+  }, [stocks]);
+  
+  return <div>{stats.avgPrice}</div>;
+};
+```
+
+### **2. React.memo for Components**
+```javascript
+import { memo } from 'react';
+
+const StockRow = memo(({ stock, onRefetch }) => {
+  // Component only re-renders if stock or onRefetch changes
+  return <tr>...</tr>;
+});
+```
+
+### **3. Virtualization for Large Lists**
+```bash
+npm install react-window
+```
+
+```javascript
+import { FixedSizeList } from 'react-window';
+
+// Render only visible rows (good for 2700+ stocks)
+<FixedSizeList
+  height={600}
+  itemCount={stocks.length}
+  itemSize={50}
+>
+  {({ index, style }) => (
+    <div style={style}>
+      <StockRow stock={stocks[index]} />
+    </div>
+  )}
+</FixedSizeList>
+```
+
+### **4. Debounce Search/Filter**
+```javascript
+import { useState, useEffect } from 'react';
+
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearT

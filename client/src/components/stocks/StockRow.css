@@ -1,0 +1,56 @@
+.stock-row {
+  transition: all 0.2s;
+}
+
+.stock-symbol {
+  font-weight: 600;
+  color: #212529;
+  font-family: 'Courier New', monospace;
+}
+
+.stock-company {
+  color: #6c757d;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-price {
+  font-weight: 600;
+  color: #212529;
+}
+
+.stock-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-rr,
+.stock-success,
+.stock-rsi {
+  font-weight: 500;
+}
+
+.stock-updated {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.stock-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .stock-company {
+    max-width: 120px;
+  }
+
+  .stock-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

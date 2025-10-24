@@ -1,0 +1,111 @@
+.watchlist-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.watchlist-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.watchlist-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.watchlist-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #212529;
+  flex: 1;
+}
+
+.watchlist-count {
+  background-color: #e7f3ff;
+  color: #007bff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.watchlist-description {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.watchlist-trends {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.trend-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trend-up {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.trend-down {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.trend-neutral {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.watchlist-meta {
+  padding-top: 12px;
+  border-top: 1px solid #e9ecef;
+}
+
+.watchlist-updated {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.watchlist-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.watchlist-view {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.watchlist-view:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
